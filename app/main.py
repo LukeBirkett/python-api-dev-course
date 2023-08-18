@@ -61,7 +61,7 @@ def get_posts(db: Session = Depends(get_db)):
     # posts = cursor.fetchall()
     # print(posts)
     posts = db.query(models.Post).all()
-    return {"data": posts}
+    return posts
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
@@ -73,7 +73,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    return {"data": new_post}
+    return new_post
 
 
 @app.get("/posts/{id}")
@@ -118,4 +118,4 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 
     updating_query.update(post.dict(), synchronize_session=False)
     db.commit()
-    return{"message": updating_query.first()} 
+    return updating_query.first()
