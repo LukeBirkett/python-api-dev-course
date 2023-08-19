@@ -31,25 +31,6 @@ while True:
         print("Error: ", error)
         time.sleep(2)
 
-
-my_posts = [
-    {"title": "title1", "content": "content1", "id": 1},
-    {"title": "title2", "content": "content2", "id": 2},
-]
-
-
-def find_post(id):
-    for p in my_posts:
-        if p['id'] == id:
-            return p
-
-
-def find_index_post(id):
-    for index, post in enumerate(my_posts):
-        if post['id'] == id:
-            return index
-
-
 @app.get("/")
 def root():
     return {"message": "Hello World"}
