@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import models, schemas
+from passlib.context import CryptContext
+from . import models, schemas, utils
 from .database import engine, SessionLocal, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -54,16 +55,14 @@ def root():
     return {"message": "Hello World"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.PostResponse])
 def get_posts(db: Session = Depends(get_db)):
-    # RAW SQL METHOD
     # cursor.execute("""SELECT * FROM post""")
     # posts = cursor.fetchall()
-    # print(posts)
     posts = db.query(models.Post).all()
     return posts
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute("""INSERT INTO post (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
     # new_post = cursor.fetchone()
@@ -76,7 +75,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.PostResponse)
 def get_post(id: int, db: Session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM post WHERE id = %s """, (str(id)))
     # post = cursor.fetchone()
@@ -103,7 +102,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.PostResponse)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     """UPDATE post SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", 
@@ -119,3 +118,26 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     updating_query.update(post.dict(), synchronize_session=False)
     db.commit()
     return updating_query.first()
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserCreateResponse)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # hash password user.password
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+
+    new_user = models.User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.get("/users/{id}")
+def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id)
+
+    print(user)
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"user with id:{id} not found")
+    
+    return user
