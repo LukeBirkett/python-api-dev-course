@@ -22,6 +22,16 @@ def get_post(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id:{id} was not found")
     return post
 
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostResponse)
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
+
+    new_post = models.Post(**post.dict())
+    print(new_post)
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+    return new_post
+
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     delete = db.query(models.Post).filter(models.Post.id == id)
