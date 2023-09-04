@@ -11,8 +11,9 @@ class PostCreate(PostBase):
     pass
 
 class PostResponse(PostBase):
-    # id: int
+    id: int
     created_at: datetime
+    user_id: int
     class Config:
         orm_mode = True
 
