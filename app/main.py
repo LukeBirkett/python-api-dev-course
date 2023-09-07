@@ -14,9 +14,9 @@ while True:
     try:
         conn = psycopg2.connect(
             host='localhost', 
-            database='fastapi', 
+            database='postgres', 
             user='postgres', 
-            password='Torrent123!!!', 
+            password='password', 
             cursor_factory=RealDictCursor
             )
         cursor = conn.cursor()
